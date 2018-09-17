@@ -43,6 +43,34 @@ namespace WoWDataMigrate
             }
         }
 
+        public static void InsertZone(Zone zone)
+        {
+            string cmdStr = "Insert Into Zone (ZoneId, ZoneName, isRaid) VALUES (@zoneId, @zoneName, @isRaid)";
+            List<string> parameterNames = new List<string> { "@zoneId", "@zoneName", "@isRaid" };
+            ArrayList parameterValues = new ArrayList { zone.id, zone.name, zone.isRaid };
+            ExecuteQuery(cmdStr, parameterNames, parameterValues);
+
+            foreach (availableMode mode in zone.availableModes)
+            {
+                cmdStr = "Insert Into ZoneMode (ZoneId, ModeId) VALUES (@zoneId, @modeId)";
+                List<string> parameterNames2 = new List<string> { "@zoneId", "@modeId" };
+                ArrayList parameterValues2 = new ArrayList { zone.id, mode };
+                ExecuteQuery(cmdStr, parameterNames2, parameterValues2);
+            }
+        }
+
+        public static void InsertBossesFromZone(Zone zone)
+        {
+            foreach (Boss boss in zone.bosses)
+            {
+                string cmdStr = "Insert Into Boss (BossName, BossId, ZoneId) VALUES (@bossName, @bossId, @zoneId)";
+                List<string> parameterNames = new List<string> { "@bossName", "@bossId", "@zoneId"};
+                ArrayList parameterValues = new ArrayList { boss.name, boss.id, zone.id };
+                ExecuteQuery(cmdStr, parameterNames, parameterValues);
+            }
+
+        }
+
         public static List<int> GetItemIds()
         {
             List<int> intList = new List<int>();
