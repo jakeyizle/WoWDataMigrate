@@ -116,6 +116,11 @@ namespace WoWDataMigrate
             ExecuteQuery(cmdStr, parameterNames, parameterValues);
         }
 
+        public static List<int> GetZoneIds()
+        {
+            DataTable dt = ExecuteQuery("Select ZoneId from Zone");
+        }
+
         static DataTable ExecuteQuery(string query, List<string> parameterNames = null, ArrayList parameterValues = null)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
