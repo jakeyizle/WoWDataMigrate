@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RestSharp;
 using Newtonsoft.Json;
+using System.Collections;
 
 namespace WoWDataMigrate
 {
@@ -14,8 +15,7 @@ namespace WoWDataMigrate
         static void Main()
         {
            switch(UI.Text("1. Item Migration " +
-               "\r\n 2. Zone Migration" +
-               "\r\n 3. Boss Migration").ToLower())
+               "\r\n2. Zone and Boss Migration").ToLower())
             {
                 case "1":
                     MigrateItems();
@@ -23,9 +23,6 @@ namespace WoWDataMigrate
                     break;
                 case "2":
                     MigrateZones();
-                    Main();
-                    break;
-                case "3":
                     Main();
                     break;
                 default:
@@ -36,29 +33,30 @@ namespace WoWDataMigrate
 
         static void MigrateItems()
         {
-            List<int> idList = Database.GetItemIds().Concat(Database.GetErrorIds(Database.ErrorType.Item)).ToList();
-            for (int itemId = 200000; itemId < 0; itemId--)
-            {
-                if (idList.Contains(itemId))
-                {
-                    continue;
-                }
-                IRestResponse response = API.GetItem(itemId);
+            List<int> bossList = Database.GetBossIds();
+            List<int> existingItems = Database.GetBadItemIds().Concat(Database.GetItemIds()).ToList();
 
-                if (!response.StatusCode.ToString().Contains("OK"))
+            foreach (int bossId in bossList)
+            {
+                List<int> itemIds = Protractor.GetItemIds(bossId).Except(existingItems).ToList();
+                foreach (int itemId in itemIds)
                 {
-                    Database.InsertError(Database.ErrorType.Item, itemId);
-                }
-                else
-                {
+                    IRestResponse response = API.GetItem(itemId);
                     ItemJson itemJson = JsonConvert.DeserializeObject<ItemJson>(response.Content);
+                    itemJson.itemSource.sourceId = bossId;
+                    if (itemJson.itemLevel < 285)
+                    {
+                        Database.InsertBadItem(itemJson);
+                        Console.WriteLine("BAD ITEM - ItemId: " + itemJson.id + " ItemName: " + itemJson.name);
+                        continue;
+                    }
                     Database.InsertItem(itemJson);
                     Console.WriteLine("ItemId: " + itemJson.id + " ItemName: " + itemJson.name);
                 }
-                SleepIfNeeded(response);
-
             }
+            Protractor.Teardown();
         }
+        
         static void MigrateZones()
         {
             IRestResponse response = API.GetAllZones();
@@ -70,18 +68,6 @@ namespace WoWDataMigrate
                     Database.InsertZone(zone);
                     Database.InsertBossesFromZone(zone);
                 }
-            }
-        }
-        static void SleepIfNeeded(IRestResponse response)
-        {
-            //Sleep if approaching API limit
-            if (response.Headers.ToList()[7].ToString().Contains("100"))
-            {
-                System.Threading.Thread.Sleep(1050);
-            }
-            if (response.Headers.ToList()[9].ToString().Contains("36000"))
-            {
-                System.Threading.Thread.Sleep(3600050);
             }
         }
     }

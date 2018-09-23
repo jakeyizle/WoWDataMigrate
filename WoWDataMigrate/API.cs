@@ -10,9 +10,9 @@ namespace WoWDataMigrate
 {
     public static class API
     {
-        static string apiKey = "qhgexm8jckvmr3xfdczeqmcb8mnwb6an";
-        static string baseUrl = "https://us.api.battle.net/";
-        static string locale = "en_US";
+        const string apiKey = "qhgexm8jckvmr3xfdczeqmcb8mnwb6an";
+        const string baseUrl = "https://us.api.battle.net/";
+        const string locale = "en_US";
 
         static RestClient client = new RestClient
         {

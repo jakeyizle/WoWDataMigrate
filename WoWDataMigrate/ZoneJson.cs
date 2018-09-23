@@ -52,6 +52,22 @@ namespace WoWDataMigrate
         public int journalId { get; set; }
         public List<object> npcs { get; set; }
         public Location2 location { get; set; }
+
+        public void CorrectId()
+        {
+            //Mother
+            if (id == 13542) { id = 140853; }
+            //Mogul Reznak
+            if (id == 129232) { id = 131227; }
+            //Mythrax
+            if (id == 134546) { id = 136383; }
+            //Captain Eudora
+            if (id == 126848) { id = 129431; }
+            //Ring of Booty
+            if (id == 0) { id = 126969; }
+            //Gorak Tu;
+            if (id == 143020) { id = 144324; }
+        }
     }
 
     public class Zone

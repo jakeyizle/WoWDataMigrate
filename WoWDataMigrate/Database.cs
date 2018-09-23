@@ -19,7 +19,6 @@ namespace WoWDataMigrate
             Boss
         }
 
-
         static public string connectionString = @"Server=tcp:wowdb69.database.windows.net,1433;Initial Catalog=WoWDB;Persist Security Info=False;User ID=jakeyizle;Password=Ch!pP3Rr;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
    
         public static void InsertItem(ItemJson itemJson)
@@ -63,6 +62,7 @@ namespace WoWDataMigrate
         {
             foreach (Boss boss in zone.bosses)
             {
+                boss.CorrectId();
                 string cmdStr = "Insert Into Boss (BossName, BossId, ZoneId) VALUES (@bossName, @bossId, @zoneId)";
                 List<string> parameterNames = new List<string> { "@bossName", "@bossId", "@zoneId"};
                 ArrayList parameterValues = new ArrayList { boss.name, boss.id, zone.id };
@@ -71,54 +71,55 @@ namespace WoWDataMigrate
 
         }
 
-        public static List<int> GetItemIds()
+        public static List<string> GetItemNames()
         {
-            List<int> intList = new List<int>();
-            DataTable dt = ExecuteQuery("Select ItemId from Item");
-
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                intList.Add(dt.Rows[i].Field<int>("ItemId"));
-            }
-
-            return intList;
+            List<String> stringList = new List<string>();
+            DataTable dt = ExecuteQuery("Select ItemName from Item");
+            return GetString(dt);
         }
 
-        public static List<int> GetErrorIds(ErrorType errorType)
+        public static List<string> GetBadItemNames()
         {
-            List<int> intList = new List<int>();
-            DataTable dt;
-            if (errorType == ErrorType.All)
-            {
-                dt = ExecuteQuery("Select Id From MigrationError");
-            }
-            else
-            {
-                string cmdStr = "Select Id From MigrationError Where Type = @errorType";
-                List<string> parameterNames = new List<string> { "@errorType" };
-                ArrayList parameterValues = new ArrayList  {errorType };
-                dt = ExecuteQuery(cmdStr, parameterNames, parameterValues);
-            }
-
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                intList.Add(dt.Rows[i].Field<int>("Id"));
-            }
-
-            return intList;
-        }
-
-        public static void InsertError(ErrorType errorType, int id)
-        {
-            string cmdStr = "Insert Into MigrationError (Id, Type) VALUES (@id, @errorType)";
-            List<string> parameterNames = new List<string> { "@id", "@errorType" };
-            ArrayList parameterValues = new ArrayList { id, errorType };
-            ExecuteQuery(cmdStr, parameterNames, parameterValues);
+            DataTable dt = ExecuteQuery("Select ItemName from BadItem");
+            return GetString(dt);
         }
 
         public static List<int> GetZoneIds()
         {
             DataTable dt = ExecuteQuery("Select ZoneId from Zone");
+            return GetInt(dt);
+        }
+
+        public static List<int> GetItemIds()
+        {
+            List<int> intList = new List<int>();
+            DataTable dt = ExecuteQuery("Select ItemId from Item");
+
+            return GetInt(dt);
+        }
+
+        public static List<int> GetBadItemIds()
+        {
+            List<int> intList = new List<int>();
+            DataTable dt = ExecuteQuery("Select ItemId from BadItem");
+
+            return GetInt(dt);
+        }
+
+        public static List<int> GetBossIds()
+        {
+            DataTable dt = ExecuteQuery("Select BossId from Boss");
+            return GetInt(dt);
+        }
+
+
+        public static void InsertBadItem(ItemJson itemJson)
+        {
+            string cmdStr = "Insert Into BadItem (ItemName, ItemId, BossId) VALUES (@itemName, @itemId, @bossId)";
+            List<string> parameterNames = new List<string> { "@itemName", "@itemId", "@bossId" };
+            if (itemJson.name == null) { itemJson.name = itemJson.id.ToString();    }
+            ArrayList parameterValues = new ArrayList { itemJson.name, itemJson.id, itemJson.itemSource.sourceId };
+            ExecuteQuery(cmdStr, parameterNames, parameterValues);
         }
 
         static DataTable ExecuteQuery(string query, List<string> parameterNames = null, ArrayList parameterValues = null)
@@ -140,6 +141,26 @@ namespace WoWDataMigrate
                 connection.Close();
                 return dataTable;
             }
+        }
+
+        static List<int> GetInt(DataTable dt)
+        {
+            List<int> list = new List<int>();
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                list.Add(dt.Rows[i].Field<int>(dt.Columns[0].ColumnName));
+            }
+            return list;
+        }
+
+        static List<string> GetString(DataTable dt)
+        {
+            List<string> list = new List<string>();
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                list.Add(dt.Rows[i].Field<string>(dt.Columns[0].ColumnName));
+            }
+            return list;
         }
     }
 }
