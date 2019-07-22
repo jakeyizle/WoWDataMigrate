@@ -43,7 +43,6 @@ namespace WoWDataMigrate
                     continue;
                 }
 
-                List<Item> items = new List<Item>();
                 List<int> itemIds = Protractor.GetItemIds(boss.id).ToList();
                 foreach (int itemId in itemIds)
                 {
@@ -52,7 +51,6 @@ namespace WoWDataMigrate
                     try
                     {
                         ItemJson itemJson = JsonConvert.DeserializeObject<ItemJson>(response.Content);
-
                     
                         if (itemJson.itemLevel < 285)
                         {
@@ -74,8 +72,6 @@ namespace WoWDataMigrate
                 }
                 Database.WriteCompleteBossToJson(boss.id);
             }
-
-
             Protractor.Teardown();
         }
         
@@ -89,8 +85,6 @@ namespace WoWDataMigrate
                 if (zone.expansionId == 7)
                 {
                     zones.Add(zone);
-                    //Database.InsertZone(zone);
-                    //Database.InsertBossesFromZone(zone);
                 }
             }
             Database.WriteZonesToJson(zones);

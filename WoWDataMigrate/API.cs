@@ -10,7 +10,7 @@ namespace WoWDataMigrate
 {
     public static class API
     {
-        static string apiKey;
+        static readonly string apiKey;
         const string baseUrl = "https://us.api.blizzard.com/";
         const string locale = "en_US";
 
@@ -58,6 +58,7 @@ namespace WoWDataMigrate
                     bonusId = 1537;
                     break;
                 //Crucible
+                //Not correct - 1st boss and 2nd drop different ilvls. Check boss id here too?
                 case 10057:
                     bonusId = 1547;
                     break;

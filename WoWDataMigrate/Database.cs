@@ -22,7 +22,7 @@ namespace WoWDataMigrate
             string path = basePath + "\\items.json";
             if (!File.Exists(path))
             {
-                File.Create(path).Dispose();;
+                File.Create(path).Dispose();
             }
             
             var existingData = File.ReadAllText(path);
@@ -31,7 +31,7 @@ namespace WoWDataMigrate
             itemList.Add(item);
             
             string json = JsonConvert.SerializeObject(itemList.ToArray());
-            System.IO.File.WriteAllText(path, json);
+            File.WriteAllText(path, json);
         }
 
         public static void WriteZonesToJson(List<Zone> zones)
@@ -39,7 +39,7 @@ namespace WoWDataMigrate
             string path = basePath + "\\zones.json";
             if (!File.Exists(path))
             {
-                File.Create(path).Dispose();;
+                File.Create(path).Dispose();
             }
             List<TrueZoneJson> list = new List<TrueZoneJson>();
             foreach(Zone zone in zones)
@@ -48,7 +48,7 @@ namespace WoWDataMigrate
             }
             string json = JsonConvert.SerializeObject(list.ToArray());
 
-            System.IO.File.WriteAllText(path, json);
+            File.WriteAllText(path, json);
         }
 
         public static void WriteBossesToJson(List<Zone> zones)
@@ -56,7 +56,7 @@ namespace WoWDataMigrate
             string path = basePath + "\\bosses.json";
             if (!File.Exists(path))
             {
-                File.Create(path).Dispose();;
+                File.Create(path).Dispose();
             }
 
             List<TrueBossJson> bosses = new List<TrueBossJson>();
@@ -70,15 +70,15 @@ namespace WoWDataMigrate
             }
             string json = JsonConvert.SerializeObject(bosses.ToArray());
 
-            System.IO.File.WriteAllText(path, json);
+            File.WriteAllText(path, json);
 
         }
         public static List<int> GetCompleteBosses()
         {
-            string path = basePath + "\\completeBosses.json";
+            string path = basePath + "\\completeBosses.csv";
             if (!File.Exists(path))
             {
-                File.Create(path).Dispose();;
+                File.Create(path).Dispose();
             }
             using (StreamReader r = new StreamReader(path))
             {
@@ -90,12 +90,12 @@ namespace WoWDataMigrate
         }
         public static void WriteCompleteBossToJson(int bossId)
         {
-            string path = basePath + "\\completeBosses.json";
+            string path = basePath + "\\completeBosses.csv";
             if (!File.Exists(path))
             {
-                File.Create(path).Dispose();;
+                File.Create(path).Dispose();
             }
-            System.IO.File.AppendAllText(path, bossId.ToString()+",");
+            File.AppendAllText(path, bossId.ToString()+",");
         }
 
         
@@ -104,7 +104,7 @@ namespace WoWDataMigrate
             string path = basePath + "\\bosses.json";
             if (!File.Exists(path))
             {
-                File.Create(path).Dispose();;
+                File.Create(path).Dispose();
             }
             using (StreamReader r = new StreamReader(path))
             {
