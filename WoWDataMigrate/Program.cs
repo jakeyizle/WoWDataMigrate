@@ -33,27 +33,49 @@ namespace WoWDataMigrate
 
         static void MigrateItems()
         {
-            List<int> bossList = Database.GetBossIds();
-            List<int> existingItems = Database.GetBadItemIds().Concat(Database.GetItemIds()).ToList();
-
-            foreach (int bossId in bossList)
+            List<TrueBossJson> bossList = Database.GetBosses();          
+            List<int> completedBosses = Database.GetCompleteBosses();
+            foreach (TrueBossJson boss in bossList)
             {
-                List<int> itemIds = Protractor.GetItemIds(bossId).Except(existingItems).ToList();
+                if (completedBosses.Count != 0 && completedBosses.Contains(boss.id))
+                {
+                    continue;
+                }
+
+                Dictionary<int, List<ItemJson>> dict = new Dictionary<int, List<ItemJson>>();
+                List<ItemJson> list = new List<ItemJson>();
+                List<int> itemIds = Protractor.GetItemIds(boss.id).ToList();
                 foreach (int itemId in itemIds)
                 {
+                    //Verify base item level is high enough to not be a junk item
                     IRestResponse response = API.GetItem(itemId);
-                    ItemJson itemJson = JsonConvert.DeserializeObject<ItemJson>(response.Content);
-                    itemJson.itemSource.sourceId = bossId;
+                    try
+                    {
+                        ItemJson itemJson = JsonConvert.DeserializeObject<ItemJson>(response.Content);
+
+                    itemJson.itemSource.sourceId = boss.id;
                     if (itemJson.itemLevel < 285)
                     {
-                        Database.InsertBadItem(itemJson);
                         Console.WriteLine("BAD ITEM - ItemId: " + itemJson.id + " ItemName: " + itemJson.name);
                         continue;
                     }
-                    Database.InsertItem(itemJson);
-                    Console.WriteLine("ItemId: " + itemJson.id + " ItemName: " + itemJson.name);
+                    //item isn't junk, so get it at the proper itemlevel
+                    response = API.GetItem(itemId, boss);
+                    itemJson = JsonConvert.DeserializeObject<ItemJson>(response.Content);
+                    list.Add(itemJson);
+                    Console.WriteLine($"ItemId: {itemJson.id} - ItemName: {itemJson.name} - ItemLevel - {itemJson.itemLevel}");
+                    }
+                    catch (Exception)
+                    {
+                        Console.WriteLine($"ERROR: {itemId}");
+                    }
                 }
+                dict.Add(boss.id, list);
+                Database.WriteItemsToJson(dict);
+                Database.WriteCompleteBossToJson(boss.id);
             }
+
+
             Protractor.Teardown();
         }
         
@@ -61,14 +83,18 @@ namespace WoWDataMigrate
         {
             IRestResponse response = API.GetAllZones();
             ZoneJson zoneJson = JsonConvert.DeserializeObject<ZoneJson>(response.Content);
+            List<Zone> zones = new List<Zone>();
             foreach (Zone zone in zoneJson.zones)
             {
                 if (zone.expansionId == 7)
                 {
-                    Database.InsertZone(zone);
-                    Database.InsertBossesFromZone(zone);
+                    zones.Add(zone);
+                    //Database.InsertZone(zone);
+                    //Database.InsertBossesFromZone(zone);
                 }
             }
+            Database.WriteZonesToJson(zones);
+            Database.WriteBossesToJson(zones);
         }
     }
 }

@@ -56,7 +56,7 @@ namespace WoWDataMigrate
         public void CorrectId()
         {
             //Mother
-            if (id == 13542) { id = 140853; }
+            if (id == 135452) { id = 140853; }
             //Mogul Reznak
             if (id == 129232) { id = 131227; }
             //Mythrax
@@ -67,6 +67,16 @@ namespace WoWDataMigrate
             if (id == 0) { id = 126969; }
             //Gorak Tu;
             if (id == 143020) { id = 144324; }
+            //mara grimfang
+            if (id == 144691) { id = 148238; }
+            //grong
+            if (id == 144637) { id = 148117; }
+            //jaina
+            if (id == 146416) { id = 155588; }
+            //mestrah
+            if (id == 144690) { id = 148238; }
+            //azshara
+            if (id == 152910) { id = 155126; }
         }
     }
 

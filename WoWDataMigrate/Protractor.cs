@@ -12,7 +12,8 @@ namespace WoWDataMigrate
     {
         const string CHROMEDRIVERPATH = @"C:\Chromedriver";
         const string baseUrl = "https://www.wowhead.com/";
-        static ChromeDriver driver = new ChromeDriver(CHROMEDRIVERPATH);
+        static ChromeOptions options = new ChromeOptions();
+        static ChromeDriver driver = new ChromeDriver(CHROMEDRIVERPATH, options ,TimeSpan.FromMinutes(3));
 
         static public void Teardown()
         {
@@ -22,7 +23,7 @@ namespace WoWDataMigrate
         static public List<int> GetItemIds (int bossId)
         {
             List<int> list = new List<int>();
-            driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(10);
+            driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(15);
             driver.Url = baseUrl + "npc=" + bossId.ToString();
             for (int i = 0; i < driver.FindElementsByClassName(Page.item).Count(); i++)
             {

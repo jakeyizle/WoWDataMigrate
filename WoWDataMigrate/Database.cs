@@ -7,7 +7,10 @@ using System.Threading.Tasks;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.Collections;
-
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.IO;
+using Microsoft.VisualBasic.FileIO;
 namespace WoWDataMigrate
 {
     static class Database
@@ -18,149 +21,259 @@ namespace WoWDataMigrate
             Item,
             Boss
         }
-
-        static public string connectionString = @"Server=tcp:wowdb69.database.windows.net,1433;Initial Catalog=WoWDB;Persist Security Info=False;User ID=jakeyizle;Password=Ch!pP3Rr;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
-   
-        public static void InsertItem(ItemJson itemJson)
+    
+        public static void WriteItemsToJson2(string response)
         {
-            string cmdStr = "Insert Into Item ([ItemId], [ItemName], [ItemLevel], [SourceId], [SourceType], [InventoryTypeId]) Values (@itemId, @itemName, @itemLevel, @sourceId, @sourceType, @inventoryTypeId)";
-            List<string> parameterNames = new List<string> { "@itemId", "@itemName", "@itemLevel", "@sourceId", "@sourceType", "@inventoryTypeId" };
-            ArrayList parameterValues = new ArrayList { itemJson.id, itemJson.name, itemJson.itemLevel, itemJson.itemSource.sourceId, itemJson.itemSource.sourceType, itemJson.inventoryType };
-            ExecuteQuery(cmdStr, parameterNames, parameterValues);
-
-            InsertItemStats(itemJson);
+            JObject test = JObject.Parse(response);
+            IList<JToken> results = test.Children().ToList();
+            Item item = results.First().ToObject<Item>();
         }
-
-        public static void InsertItemStats(ItemJson itemJson)
+        public static void WriteItemsToJson(Dictionary<int, List<ItemJson>> dict)
         {
-            foreach (var bonusStat in itemJson.bonusStats)
+            List<TrueItemJson> list = new List<TrueItemJson>();
+            foreach (KeyValuePair<int,List<ItemJson>> kvp in dict)
             {
-                string cmdStr = "Insert Into ItemStat (StatId, ItemId, Amount) Values (@statId, @itemId, @amount)";
-                List<string> parameterNames = new List<string> { "@statId", "@itemId", "@amount" };
-                ArrayList parameterValues = new ArrayList { bonusStat.stat, itemJson.id, bonusStat.amount };
-                ExecuteQuery(cmdStr, parameterNames, parameterValues);
+                kvp.Value.ForEach(x => list.Add(new TrueItemJson(x, kvp.Key)));
             }
+            
+
+            var itemData = System.IO.File.ReadAllText(@"D:\Coding Projects\my-app\itemJson.txt");
+            var itemList = JsonConvert.DeserializeObject<List<TrueItemJson>>(itemData)
+                            ?? new List<TrueItemJson>();
+
+            var fullItemList = itemList.Concat(list).ToList();
+
+            string json = JsonConvert.SerializeObject(fullItemList.ToArray());
+            System.IO.File.WriteAllText(@"D:\Coding Projects\my-app\itemJson.txt", json);
+            WriteItemStatsToJson(dict);
         }
 
-        public static void InsertZone(Zone zone)
+        public static void WriteItemStatsToJson(Dictionary<int, List<ItemJson>> dict)
         {
-            string cmdStr = "Insert Into Zone (ZoneId, ZoneName, isRaid) VALUES (@zoneId, @zoneName, @isRaid)";
-            List<string> parameterNames = new List<string> { "@zoneId", "@zoneName", "@isRaid" };
-            ArrayList parameterValues = new ArrayList { zone.id, zone.name, zone.isRaid };
-            ExecuteQuery(cmdStr, parameterNames, parameterValues);
-
-            foreach (availableMode mode in zone.availableModes)
+            List<TrueItemStatJson> list = new List<TrueItemStatJson>();
+            foreach (KeyValuePair<int, List<ItemJson>> kvp in dict)
             {
-                cmdStr = "Insert Into ZoneMode (ZoneId, ModeId) VALUES (@zoneId, @modeId)";
-                List<string> parameterNames2 = new List<string> { "@zoneId", "@modeId" };
-                ArrayList parameterValues2 = new ArrayList { zone.id, mode };
-                ExecuteQuery(cmdStr, parameterNames2, parameterValues2);
-            }
-        }
-
-        public static void InsertBossesFromZone(Zone zone)
-        {
-            foreach (Boss boss in zone.bosses)
-            {
-                boss.CorrectId();
-                string cmdStr = "Insert Into Boss (BossName, BossId, ZoneId) VALUES (@bossName, @bossId, @zoneId)";
-                List<string> parameterNames = new List<string> { "@bossName", "@bossId", "@zoneId"};
-                ArrayList parameterValues = new ArrayList { boss.name, boss.id, zone.id };
-                ExecuteQuery(cmdStr, parameterNames, parameterValues);
+                kvp.Value.ForEach(x =>
+                    x.bonusStats.ForEach(y => list.Add(new TrueItemStatJson(x.id, y))));
             }
 
+            var itemStatData = File.ReadAllText(@"D:\Coding Projects\my-app\itemStatJson.txt");
+            var itemStatList = JsonConvert.DeserializeObject<List<TrueItemStatJson>>(itemStatData)
+                            ?? new List<TrueItemStatJson>();
+
+            var fullItemStatList = itemStatList.Concat(list).ToList();
+            string json = JsonConvert.SerializeObject(fullItemStatList.ToArray());
+
+            System.IO.File.WriteAllText(@"D:\Coding Projects\my-app\itemStatJson.txt", json);
         }
 
-        public static List<string> GetItemNames()
+        public static void WriteZonesToJson(List<Zone> zones)
         {
-            List<String> stringList = new List<string>();
-            DataTable dt = ExecuteQuery("Select ItemName from Item");
-            return GetString(dt);
-        }
-
-        public static List<string> GetBadItemNames()
-        {
-            DataTable dt = ExecuteQuery("Select ItemName from BadItem");
-            return GetString(dt);
-        }
-
-        public static List<int> GetZoneIds()
-        {
-            DataTable dt = ExecuteQuery("Select ZoneId from Zone");
-            return GetInt(dt);
-        }
-
-        public static List<int> GetItemIds()
-        {
-            List<int> intList = new List<int>();
-            DataTable dt = ExecuteQuery("Select ItemId from Item");
-
-            return GetInt(dt);
-        }
-
-        public static List<int> GetBadItemIds()
-        {
-            List<int> intList = new List<int>();
-            DataTable dt = ExecuteQuery("Select ItemId from BadItem");
-
-            return GetInt(dt);
-        }
-
-        public static List<int> GetBossIds()
-        {
-            DataTable dt = ExecuteQuery("Select BossId from Boss");
-            return GetInt(dt);
-        }
-
-
-        public static void InsertBadItem(ItemJson itemJson)
-        {
-            string cmdStr = "Insert Into BadItem (ItemName, ItemId, BossId) VALUES (@itemName, @itemId, @bossId)";
-            List<string> parameterNames = new List<string> { "@itemName", "@itemId", "@bossId" };
-            if (itemJson.name == null) { itemJson.name = itemJson.id.ToString();    }
-            ArrayList parameterValues = new ArrayList { itemJson.name, itemJson.id, itemJson.itemSource.sourceId };
-            ExecuteQuery(cmdStr, parameterNames, parameterValues);
-        }
-
-        static DataTable ExecuteQuery(string query, List<string> parameterNames = null, ArrayList parameterValues = null)
-        {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            List<TrueZoneJson> list = new List<TrueZoneJson>();
+            foreach(Zone zone in zones)
             {
-                connection.Open();
-                SqlCommand queryCommand = new SqlCommand(query, connection);
-                if (parameterNames != null)
+                list.Add(new TrueZoneJson(zone));
+            }
+            string json = JsonConvert.SerializeObject(list.ToArray());
+
+            System.IO.File.WriteAllText(@"D:\Coding Projects\my-app\zoneJson.txt", json);
+        }
+
+        public static void WriteBossesToJson(List<Zone> zones)
+        {
+            List<TrueBossJson> bosses = new List<TrueBossJson>();
+            foreach(Zone zone in zones)
+            {
+                foreach(Boss boss in zone.bosses)
                 {
-                    for (int i = 0; i < parameterNames.Count(); i++)
-                    {
-                        queryCommand.Parameters.AddWithValue(parameterNames[i], parameterValues[i]);
-                    }
+                    boss.CorrectId();
+                    bosses.Add(new TrueBossJson(boss, zone));
                 }
-                SqlDataReader queryCommandReader = queryCommand.ExecuteReader();
-                DataTable dataTable = new DataTable();
-                dataTable.Load(queryCommandReader);
-                connection.Close();
-                return dataTable;
             }
+            string json = JsonConvert.SerializeObject(bosses.ToArray());
+
+            System.IO.File.WriteAllText(@"D:\Coding Projects\my-app\bossJson.json", json);
+
+        }
+        public static List<int> GetCompleteBosses()
+        {
+            using (StreamReader r = new StreamReader(@"D:\Coding Projects\my-app\completeBosses.json"))
+            {
+                string text = r.ReadToEnd();
+                List<string> list = text.Split(',').ToList();
+                List<int> intList = list.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x)).ToList();
+                return intList;
+            }
+        }
+        public static void WriteCompleteBossToJson(int bossId)
+        {
+            System.IO.File.AppendAllText(@"D:\Coding Projects\my-app\completeBosses.json", bossId.ToString()+",");
         }
 
-        static List<int> GetInt(DataTable dt)
+        
+        public static List<TrueBossJson> GetBosses()
         {
-            List<int> list = new List<int>();
-            for (int i = 0; i < dt.Rows.Count; i++)
+            using (StreamReader r = new StreamReader(@"D:\Coding Projects\my-app\bossJson.json"))
             {
-                list.Add(dt.Rows[i].Field<int>(dt.Columns[0].ColumnName));
+                string json = r.ReadToEnd();
+                List<TrueBossJson> bosses = JsonConvert.DeserializeObject<List<TrueBossJson>>(json);
+                return bosses.ToList();
             }
-            return list;
         }
+            //public static List<int> BossIds = new List<int> {
+            //  122967,
+            //  122965,
+            //  122963,
+            //  122968,
+            //  126832,
+            //  129431,
+            //  126969,
+            //  126983,
+            //  127479,
+            //  127484,
+            //  127490,
+            //  127503,
+            //  129214,
+            //  129227,
+            //  129231,
+            //  131227,
+            //  135360,
+            //  131667,
+            //  131863,
+            //  131527,
+            //  144324,
+            //  131318,
+            //  131817,
+            //  131383,
+            //  133007,
+            //  128650,
+            //  129208,
+            //  128651,
+            //  128652,
+            //  133379,
+            //  133384,
+            //  133389,
+            //  133392,
+            //  134056,
+            //  134063,
+            //  134060,
+            //  134069,
+            //  135322,
+            //  134993,
+            //  135470,
+            //  136160,
+            //  137119,
+            //  140853,
+            //  133298,
+            //  134445,
+            //  134442,
+            //  138967,
+            //  136383,
+            //  132998,
+            //  144683,
+            //  144680,
+            //  148238,
+            //  148117,              
+            //  145261,
+            //  144747,
+            //  145616,
+            //  144796,
+            //  146256,
+            //  149684
+            //};
+    }
 
-        static List<string> GetString(DataTable dt)
+    public class TrueZoneJson
+    {
+        public int id { get; set; }
+        public string name { get; set; }
+        public bool isRaid { get; set; }
+
+        public TrueZoneJson(Zone zone)
         {
-            List<string> list = new List<string>();
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                list.Add(dt.Rows[i].Field<string>(dt.Columns[0].ColumnName));
-            }
-            return list;
+            id = zone.id;
+            name = zone.name;
+            isRaid = zone.isRaid;
         }
+    }
+
+    public class TrueBossJson
+    {        
+        public string name { get; set; }
+        public int id { get; set; }
+        public int zoneId { get; set; }
+        
+        public TrueBossJson()
+        {
+
+        }
+        public TrueBossJson(Boss boss, Zone zone)
+        {            
+            id = boss.id;
+            name = boss.name;
+            zoneId = zone.id;
+        }
+    }
+
+    public class TrueItemJson
+    {
+        public int id { get; set; }
+        public string name { get; set; }
+        public int sourceId { get; set; }
+        public int inventoryType { get; set; }
+        public int itemLevel { get; set; }
+
+        public TrueItemJson()
+        {
+
+        }
+        public TrueItemJson(ItemJson itemJson, int bossId)
+        {
+            id = itemJson.id;
+            name = itemJson.name;
+            inventoryType = itemJson.inventoryType;
+            sourceId = bossId;
+            itemLevel = itemJson.itemLevel;
+        }
+    }
+    public class TrueItemStatJson
+    {
+        public int itemId { get; set; }
+        public int stat { get; set; }
+        public int amount { get; set; }
+        
+        public TrueItemStatJson()
+        {
+
+        }
+        public TrueItemStatJson(int _itemId, BonusStat bonusStat)
+        {
+            itemId = _itemId;
+            stat = bonusStat.stat;
+            amount = bonusStat.amount;
+        }
+    }
+
+    public class Item
+    {
+        [JsonProperty("name")]
+        public string name;
+        [JsonProperty("id")]
+        public int id;
+        [JsonProperty("bonusStats")]
+        public List<Stat> stats;
+        [JsonProperty("inventoryType")]
+        public int inventoryType;
+        [JsonProperty("itemLevel")]
+        public int itemLevel;
+        public int sourceId;
+    }
+
+    public class Stat
+    {
+        [JsonProperty("stat")]
+        public int id;
+        [JsonProperty("amount")]
+        public int amount;
     }
 }
