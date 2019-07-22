@@ -22,50 +22,54 @@ namespace WoWDataMigrate
             Boss
         }
     
-        public static void WriteItemsToJson2(string response)
+        public static void WriteItemToJson(Item item)
         {
-            JObject test = JObject.Parse(response);
-            IList<JToken> results = test.Children().ToList();
-            Item item = results.First().ToObject<Item>();
+            var existingData = File.ReadAllText(@"D:\Coding Projects\my-app\items.json");
+            var itemList = JsonConvert.DeserializeObject<List<Item>>(existingData)
+                ?? new List<Item>();
+            itemList.Add(item);
+            
+            string json = JsonConvert.SerializeObject(itemList.ToArray());
+            System.IO.File.WriteAllText(@"D:\Coding Projects\my-app\items.json", json);
         }
-        public static void WriteItemsToJson(Dictionary<int, List<ItemJson>> dict)
-        {
-            List<TrueItemJson> list = new List<TrueItemJson>();
-            foreach (KeyValuePair<int,List<ItemJson>> kvp in dict)
-            {
-                kvp.Value.ForEach(x => list.Add(new TrueItemJson(x, kvp.Key)));
-            }
+        //public static void WriteItemsToJson(Dictionary<int, List<ItemJson>> dict)
+        //{
+        //    List<TrueItemJson> list = new List<TrueItemJson>();
+        //    foreach (KeyValuePair<int,List<ItemJson>> kvp in dict)
+        //    {
+        //        kvp.Value.ForEach(x => list.Add(new TrueItemJson(x, kvp.Key)));
+        //    }
             
 
-            var itemData = System.IO.File.ReadAllText(@"D:\Coding Projects\my-app\itemJson.txt");
-            var itemList = JsonConvert.DeserializeObject<List<TrueItemJson>>(itemData)
-                            ?? new List<TrueItemJson>();
+        //    var itemData = System.IO.File.ReadAllText(@"D:\Coding Projects\my-app\itemJson.txt");
+        //    var itemList = JsonConvert.DeserializeObject<List<TrueItemJson>>(itemData)
+        //                    ?? new List<TrueItemJson>();
 
-            var fullItemList = itemList.Concat(list).ToList();
+        //    var fullItemList = itemList.Concat(list).ToList();
 
-            string json = JsonConvert.SerializeObject(fullItemList.ToArray());
-            System.IO.File.WriteAllText(@"D:\Coding Projects\my-app\itemJson.txt", json);
-            WriteItemStatsToJson(dict);
-        }
+        //    string json = JsonConvert.SerializeObject(fullItemList.ToArray());
+        //    System.IO.File.WriteAllText(@"D:\Coding Projects\my-app\itemJson.txt", json);
+        //    WriteItemStatsToJson(dict);
+        //}
 
-        public static void WriteItemStatsToJson(Dictionary<int, List<ItemJson>> dict)
-        {
-            List<TrueItemStatJson> list = new List<TrueItemStatJson>();
-            foreach (KeyValuePair<int, List<ItemJson>> kvp in dict)
-            {
-                kvp.Value.ForEach(x =>
-                    x.bonusStats.ForEach(y => list.Add(new TrueItemStatJson(x.id, y))));
-            }
+        //public static void WriteItemStatsToJson(Dictionary<int, List<ItemJson>> dict)
+        //{
+        //    List<TrueItemStatJson> list = new List<TrueItemStatJson>();
+        //    foreach (KeyValuePair<int, List<ItemJson>> kvp in dict)
+        //    {
+        //        kvp.Value.ForEach(x =>
+        //            x.bonusStats.ForEach(y => list.Add(new TrueItemStatJson(x.id, y))));
+        //    }
 
-            var itemStatData = File.ReadAllText(@"D:\Coding Projects\my-app\itemStatJson.txt");
-            var itemStatList = JsonConvert.DeserializeObject<List<TrueItemStatJson>>(itemStatData)
-                            ?? new List<TrueItemStatJson>();
+        //    var itemStatData = File.ReadAllText(@"D:\Coding Projects\my-app\itemStatJson.txt");
+        //    var itemStatList = JsonConvert.DeserializeObject<List<TrueItemStatJson>>(itemStatData)
+        //                    ?? new List<TrueItemStatJson>();
 
-            var fullItemStatList = itemStatList.Concat(list).ToList();
-            string json = JsonConvert.SerializeObject(fullItemStatList.ToArray());
+        //    var fullItemStatList = itemStatList.Concat(list).ToList();
+        //    string json = JsonConvert.SerializeObject(fullItemStatList.ToArray());
 
-            System.IO.File.WriteAllText(@"D:\Coding Projects\my-app\itemStatJson.txt", json);
-        }
+        //    System.IO.File.WriteAllText(@"D:\Coding Projects\my-app\itemStatJson.txt", json);
+        //}
 
         public static void WriteZonesToJson(List<Zone> zones)
         {

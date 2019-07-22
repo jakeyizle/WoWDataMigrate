@@ -10,7 +10,7 @@ namespace WoWDataMigrate
 {
     public static class API
     {
-        const string apiKey = "US1rNM1638PTPiSE6stHVbS5Rq5r85AjQN";
+        const string apiKey = "UScPuMD3czGGiZfQSVsz1wrsPGg5ufdso8";
         const string baseUrl = "https://us.api.blizzard.com/";
         const string locale = "en_US";
 

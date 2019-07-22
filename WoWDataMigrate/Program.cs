@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RestSharp;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Collections;
 
 namespace WoWDataMigrate
@@ -42,8 +43,7 @@ namespace WoWDataMigrate
                     continue;
                 }
 
-                Dictionary<int, List<ItemJson>> dict = new Dictionary<int, List<ItemJson>>();
-                List<ItemJson> list = new List<ItemJson>();
+                List<Item> items = new List<Item>();
                 List<int> itemIds = Protractor.GetItemIds(boss.id).ToList();
                 foreach (int itemId in itemIds)
                 {
@@ -53,25 +53,25 @@ namespace WoWDataMigrate
                     {
                         ItemJson itemJson = JsonConvert.DeserializeObject<ItemJson>(response.Content);
 
-                    itemJson.itemSource.sourceId = boss.id;
-                    if (itemJson.itemLevel < 285)
-                    {
-                        Console.WriteLine("BAD ITEM - ItemId: " + itemJson.id + " ItemName: " + itemJson.name);
-                        continue;
-                    }
-                    //item isn't junk, so get it at the proper itemlevel
-                    response = API.GetItem(itemId, boss);
-                    itemJson = JsonConvert.DeserializeObject<ItemJson>(response.Content);
-                    list.Add(itemJson);
-                    Console.WriteLine($"ItemId: {itemJson.id} - ItemName: {itemJson.name} - ItemLevel - {itemJson.itemLevel}");
+                    
+                        if (itemJson.itemLevel < 285)
+                        {
+                            Console.WriteLine("BAD ITEM - ItemId: " + itemJson.id + " ItemName: " + itemJson.name);
+                            continue;
+                        }
+                        //item isn't junk, so get it at the proper itemlevel
+                        response = API.GetItem(itemId, boss);
+                        JObject test = JObject.Parse(response.Content);
+                        Item item = test.ToObject<Item>();
+                        item.sourceId = boss.id;
+                        Database.WriteItemToJson(item);
+                        Console.WriteLine($"ItemId: {item.id} - ItemName: {item.name} - ItemLevel - {item.itemLevel}");
                     }
                     catch (Exception)
                     {
                         Console.WriteLine($"ERROR: {itemId}");
                     }
                 }
-                dict.Add(boss.id, list);
-                Database.WriteItemsToJson(dict);
                 Database.WriteCompleteBossToJson(boss.id);
             }
 
