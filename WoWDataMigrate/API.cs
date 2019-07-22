@@ -10,7 +10,7 @@ namespace WoWDataMigrate
 {
     public static class API
     {
-        const string apiKey = "UScPuMD3czGGiZfQSVsz1wrsPGg5ufdso8";
+        static string apiKey;
         const string baseUrl = "https://us.api.blizzard.com/";
         const string locale = "en_US";
 
@@ -18,6 +18,17 @@ namespace WoWDataMigrate
         {
             BaseUrl = new Uri(baseUrl)
         };
+
+        static API()
+        {
+            var client = new RestClient("http://us.battle.net/oauth/token");
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("Content-Type", "application/x-www-form-urlencoded");
+            request.AddParameter("undefined", "grant_type=client_credentials&client_id=94ba1f222c7b40a5b9dc009527df9de0&client_secret=8jE8d4fakM2TvVNYTUiabNlCfuwsvcbT", ParameterType.RequestBody);
+            IRestResponse response = client.Execute(request);
+            var content = JsonConvert.DeserializeObject<Token>(response.Content);
+            apiKey = content.AccessToken;
+        }
 
         public static IRestResponse GetItem(int itemId, TrueBossJson boss = null)
         {
@@ -75,5 +86,16 @@ namespace WoWDataMigrate
             };
             return client.Execute(request);
         }
+    }
+    public class Token
+    {
+        [JsonProperty("access_token")]
+        public string AccessToken { get; set; }
+
+        [JsonProperty("token_type")]
+        public string TokenType { get; set; }
+
+        [JsonProperty("expires_in")]
+        public int ExpiresIn { get; set; }
     }
 }

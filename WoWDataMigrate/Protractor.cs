@@ -13,7 +13,7 @@ namespace WoWDataMigrate
         const string CHROMEDRIVERPATH = @"C:\Chromedriver";
         const string baseUrl = "https://www.wowhead.com/";
         static ChromeOptions options = new ChromeOptions();
-        static ChromeDriver driver = new ChromeDriver(CHROMEDRIVERPATH, options ,TimeSpan.FromMinutes(3));
+        static ChromeDriver driver = new ChromeDriver(CHROMEDRIVERPATH, options, TimeSpan.FromMinutes(8));
 
         static public void Teardown()
         {
