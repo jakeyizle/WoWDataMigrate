@@ -58,12 +58,17 @@ namespace WoWDataMigrate
                             continue;
                         }
                         //item isn't junk, so get it at the proper itemlevel
-                        response = API.GetItem(itemId, boss);
-                        JObject test = JObject.Parse(response.Content);
-                        Item item = test.ToObject<Item>();
-                        item.sourceId = boss.id;
-                        Database.WriteItemToJson(item);
-                        Console.WriteLine($"ItemId: {item.id} - ItemName: {item.name} - ItemLevel - {item.itemLevel}");
+                        //get base item and then +5, +10, and +15 versions                        
+                        for (int i = 0; i > 4; i++)
+                        {
+                            int bonusId = GetBonusId(boss) + i*5;
+                            response = API.GetItem(itemId, bonusId);
+                            JObject test = JObject.Parse(response.Content);
+                            Item item = test.ToObject<Item>();
+                            item.sourceId = boss.id;
+                            Database.WriteItemToJson(item);
+                            Console.WriteLine($"ItemId: {item.id} - ItemName: {item.name} - ItemLevel - {item.itemLevel}");
+                        }
                     }
                     catch (Exception)
                     {
@@ -89,6 +94,39 @@ namespace WoWDataMigrate
             }
             Database.WriteZonesToJson(zones);
             Database.WriteBossesToJson(zones);
+        }
+
+        static int GetBonusId(TrueBossJson boss)
+        {
+            int bonusId;
+            switch (boss.zoneId)
+            {
+                //Uldir
+                case 9389:
+                    bonusId = 1507;
+                    break;
+                //BoD
+                case 8670:
+                    bonusId = 1537;
+                    break;
+                //Crucible
+                //Not correct - 1st boss and 2nd drop different ilvls. Check boss id here too?
+                //1st boss is 420
+                //2nd boss is 425
+                case 10057:                    
+                    bonusId = boss.id == 145371 ? 1547 : 1542;
+                    break;
+                //Palace
+                case 10425:
+                    bonusId = 1517;
+                    break;
+                //Dungeon
+                //Season 3 M10 is 430
+                default:
+                    bonusId = 1602;
+                    break;
+            }
+            return bonusId;
         }
     }
 }

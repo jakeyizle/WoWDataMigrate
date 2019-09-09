@@ -44,10 +44,10 @@ namespace WoWDataMigrate
                 }
                 if (char.IsNumber(url[i]))
                 {
-                    itemId = itemId + url[i];
+                    itemId += url[i];
                 }
             }
-            return Int32.Parse(itemId);
+            return int.Parse(itemId);
         }
     }
 
