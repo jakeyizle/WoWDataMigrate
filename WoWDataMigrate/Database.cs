@@ -161,6 +161,7 @@ namespace WoWDataMigrate
         [JsonProperty("itemLevel")]
         public int itemLevel;
         public int sourceId;
+        public int bonusId;
     }
 
     public class Stat

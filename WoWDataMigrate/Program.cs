@@ -59,7 +59,7 @@ namespace WoWDataMigrate
                         }
                         //item isn't junk, so get it at the proper itemlevel
                         //get base item and then +5, +10, and +15 versions                        
-                        for (int i = 0; i > 4; i++)
+                        for (int i = 0; i < 4; i++)
                         {
                             int bonusId = GetBonusId(boss) + i*5;
                             response = API.GetItem(itemId, bonusId);
