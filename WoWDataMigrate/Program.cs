@@ -65,6 +65,7 @@ namespace WoWDataMigrate
                             response = API.GetItem(itemId, bonusId);
                             JObject test = JObject.Parse(response.Content);
                             Item item = test.ToObject<Item>();
+                            item.bonusId = bonusId;
                             item.sourceId = boss.id;
                             Database.WriteItemToJson(item);
                             Console.WriteLine($"ItemId: {item.id} - ItemName: {item.name} - ItemLevel - {item.itemLevel}");
